@@ -66,4 +66,5 @@ jobs:
         echo "  password ${{ secrets.HEROKU_API_KEY }}" >> ~/.netrc
 
     - name: Deploy to Heroku
-      run: git push https://git.heroku.com/<HiveAutomation>.git HEAD:master
+      run: git push https://git.heroku.com/hiveautomation.git HEAD:master
+
