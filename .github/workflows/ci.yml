@@ -39,7 +39,7 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Set up database environment variables
+    - name: Set up BBDD environment variables
       run: |
         echo "DATABASE_URL=postgres://${{ secrets.PGUSER }}:${{ secrets.PGPASSWORD }}@localhost:5432/${{ secrets.PGDATABASE }}" >> .env
 
