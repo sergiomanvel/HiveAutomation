@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const bcrypt = require('bcryptjs'); // Importar bcrypt para encriptar la contraseña
 const pool = require("../db");
 const logger = require('../logger'); // Importar Winston
 
@@ -23,7 +24,7 @@ router.get("/", async (req, res) => {
 //     res.status(500).send("Error en el servidor");
 //   }
 // });
- 
+
 // Obtener un usuario por ID (sin devolver la contraseña)
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
@@ -46,10 +47,13 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   const { username, password } = req.body;
   try {
+    // Encriptar la contraseña antes de guardarla
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
     // Insertar usuario y devolver solo el id y el username
     const result = await pool.query(
-      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username", // Solo devolvemos id y username
-      [username, password]
+      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username", 
+      [username, hashedPassword]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -58,18 +62,25 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Actualizar un usuario (sin devolver la contraseña en la respuesta)
+// Actualizar un usuario (con encriptación de la contraseña)
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { username, password } = req.body;
+  
   try {
+    // Encriptar la nueva contraseña
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Actualizar el usuario en la base de datos
     const result = await pool.query(
-      "UPDATE users SET username = $1, password = $2 WHERE id = $3 RETURNING id, username", // Solo devolvemos id y username
-      [username, password, id]
+      "UPDATE users SET username = $1, password = $2 WHERE id = $3 RETURNING id, username", 
+      [username, hashedPassword, id]
     );
+
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
+
     res.json(result.rows[0]);
   } catch (err) {
     logger.error(`Error al actualizar usuario: ${err.message}`);
@@ -98,3 +109,5 @@ router.delete("/:id", async (req, res) => {
 });
 
 module.exports = router;
+
+
