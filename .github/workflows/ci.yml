@@ -41,7 +41,7 @@ jobs:
 
     - name: Set up database environment variables
       run: |
-        echo "DATABASE_URL=didpool://${{ secrets.PGUSER }}:${{ secrets.PGPASSWORD }}@localhost:5432/${{ secrets.PGDATABASE }}" >> .env
+        echo "DATABASE_URL=postgres://${{ secrets.PGUSER }}:${{ secrets.PGPASSWORD }}@localhost:5432/${{ secrets.PGDATABASE }}" >> .env
 
     - name: Run tests
       run: npm test
