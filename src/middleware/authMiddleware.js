@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const secretKey = 'miClaveSecreta';
+const secretKey = 'tu_clave_secreta';
 
 // Middleware para proteger las rutas
 const verifyToken = (req, res, next) => {

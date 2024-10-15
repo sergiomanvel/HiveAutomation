@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const pool = require('../db');
 
 // Clave secreta para JWT desde las variables de entorno
-const secretKey = process.env.JWT_SECRET || 'miClaveSecreta';
+const secretKey = process.env.JWT_SECRET || 'tu_clave_secreta';
 
 // Registro de usuario
 exports.register = async (req, res) => {

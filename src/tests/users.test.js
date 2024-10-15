@@ -5,18 +5,23 @@ const pool = require('../db');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs'); // Importamos bcrypt para encriptar la contraseña
 
-const tokenValido = jwt.sign({ id: 1, username: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+// Generamos un token JWT válido antes de las pruebas
+let tokenValido;
 
 beforeEach(async () => {
+  // Limpiar la tabla de usuarios antes de cada prueba
   await pool.query('DELETE FROM users');
   
-  // Encriptar la contraseña 'password' antes de insertarla
+  // Encriptar la contraseña del usuario 'admin' antes de insertarla
   const hashedPassword = await bcrypt.hash('password', 10);
 
-  // Insertar el usuario admin con la contraseña encriptada
+  // Insertar el usuario 'admin' con la contraseña encriptada
   await pool.query(
     "INSERT INTO users (id, username, password) VALUES (1, 'admin', $1)", [hashedPassword]
   );
+
+  // Generar un token JWT válido para el usuario 'admin'
+  tokenValido = jwt.sign({ id: 1, username: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
 });
 
 describe('API de Usuarios', () => {
@@ -47,7 +52,7 @@ describe('API de Usuarios', () => {
   });
 
   it('Debería actualizar un usuario', async () => {
-    const updatedUser = { username: 'updateduser', password: 'updatedpassword' };
+    const updatedUser = { username: 'updateduser', password: 'newpassword' };
     const res = await request(app)
       .put('/api/users/1')
       .send(updatedUser)
@@ -66,5 +71,5 @@ describe('API de Usuarios', () => {
 });
 
 afterAll(async () => {
-  await pool.end();
+  await pool.end(); // Cerrar la conexión a la base de datos después de todas las pruebas
 });
