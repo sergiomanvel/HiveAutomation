@@ -11,6 +11,9 @@ let tokenValido;
 beforeEach(async () => {
   // Limpiar la tabla de usuarios antes de cada prueba
   await pool.query('DELETE FROM users');
+
+  // Reiniciar la secuencia de la columna id
+  await pool.query('ALTER SEQUENCE users_id_seq RESTART WITH 1');
   
   // Encriptar la contraseña del usuario 'admin' antes de insertarla
   const hashedPassword = await bcrypt.hash('password', 10);
