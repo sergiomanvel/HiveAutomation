@@ -45,7 +45,7 @@ jobs:
           PGPASSWORD: ${{ secrets.PGPASSWORD }}
           PGDATABASE: ${{ secrets.PGDATABASE }}
 
-      # Paso para migrar manualmente la base de datos (crear la tabla users)
+      # Migrar manualmente la base de datos (crear la tabla users)
       - name: Run database migrations
         run: |
           psql -h localhost -U $PGUSER -d $PGDATABASE -c "
@@ -59,7 +59,7 @@ jobs:
           PGPASSWORD: ${{ secrets.PGPASSWORD }}
           PGDATABASE: ${{ secrets.PGDATABASE }}
 
-      # Paso para verificar repetidamente si PostgreSQL está listo usando pg_isready
+      # Esperar a que PostgreSQL esté listo
       - name: Wait for PostgreSQL to be ready
         run: |
           until pg_isready -h localhost -U $PGUSER; do
@@ -71,10 +71,10 @@ jobs:
           PGPASSWORD: ${{ secrets.PGPASSWORD }}
           PGDATABASE: ${{ secrets.PGDATABASE }}
 
-      # Paso adicional para probar la conexión a PostgreSQL con psql
+      # Probar conexión a PostgreSQL
       - name: Test PostgreSQL connection
         run: |
-          psql -h localhost -U $PGUSER -d $PGDATABASE -c "SELECT 1"
+          psql -h localhost -p 5432 -U $PGUSER -d $PGDATABASE -c "SELECT 1"
         env:
           PGUSER: ${{ secrets.PGUSER }}
           PGPASSWORD: ${{ secrets.PGPASSWORD }}

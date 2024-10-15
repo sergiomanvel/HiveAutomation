@@ -1,23 +1,25 @@
+require('dotenv').config(); // Cargar las variables de entorno para Jest
 const request = require('supertest');
-const app = require('../../app'); // Asegúrate de que la ruta es correcta a tu archivo app.js
-const pool = require('../db'); // Asegúrate de que esta es la ruta correcta hacia tu archivo de conexión a la base de datos
+const app = require('../../app');
+const pool = require('../db');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs'); // Importamos bcrypt para encriptar la contraseña
 
-const tokenValido = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3MjkwMTI3NTAsImV4cCI6MTcyOTAxNjM1MH0.xHCD7OlqhcTj2g92PJfWVVP0APnBrvqetPl98HGYqYM';
-
+const tokenValido = jwt.sign({ id: 1, username: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
 beforeEach(async () => {
-  // Limpia la tabla de usuarios antes de cada prueba
   await pool.query('DELETE FROM users');
+  
+  // Encriptar la contraseña 'password' antes de insertarla
+  const hashedPassword = await bcrypt.hash('password', 10);
 
-  // Inserta un usuario de prueba
+  // Insertar el usuario admin con la contraseña encriptada
   await pool.query(
-    "INSERT INTO users (id, username, password) VALUES (1, 'admin', 'passwordHash')"
+    "INSERT INTO users (id, username, password) VALUES (1, 'admin', $1)", [hashedPassword]
   );
 });
 
-
 describe('API de Usuarios', () => {
-
   it('Debería obtener todos los usuarios', async () => {
     const res = await request(app)
       .get('/api/users')
@@ -61,10 +63,8 @@ describe('API de Usuarios', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('message', 'Usuario eliminado');
   });
-
 });
 
-// Cerrar la conexión de base de datos después de todas las pruebas
 afterAll(async () => {
-  await pool.end(); // Esto asegurará que todas las conexiones de base de datos se cierren después de las pruebas
+  await pool.end();
 });
