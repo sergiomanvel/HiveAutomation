@@ -45,6 +45,20 @@ jobs:
           PGPASSWORD: ${{ secrets.PGPASSWORD }}
           PGDATABASE: ${{ secrets.PGDATABASE }}
 
+      # Paso para migrar manualmente la base de datos (crear la tabla users)
+      - name: Run database migrations
+        run: |
+          psql -h localhost -U $PGUSER -d $PGDATABASE -c "
+          CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(50) NOT NULL,
+            password VARCHAR(100) NOT NULL
+          );"
+        env:
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+
       # Paso para verificar repetidamente si PostgreSQL está listo usando pg_isready
       - name: Wait for PostgreSQL to be ready
         run: |
