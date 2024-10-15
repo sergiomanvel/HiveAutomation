@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('../../app'); // Asegúrate de que la ruta es correcta a tu archivo app.js
 const pool = require('../db'); // Asegúrate de que esta es la ruta correcta hacia tu archivo de conexión a la base de datos
 
-const tokenValido = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwidXNlcm5hbWUiOiJhZG1pbiIsImlhdCI6MTcyODgzOTM5MiwiZXhwIjoxNzI4ODQyOTkyfQ.opL-4hHCXhsXrkpPztVEgMtTo4JLoCEXhJ9eVGtEMCw';
+const tokenValido = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3MjkwMTI3NTAsImV4cCI6MTcyOTAxNjM1MH0.xHCD7OlqhcTj2g92PJfWVVP0APnBrvqetPl98HGYqYM';
 
 
 beforeEach(async () => {
