@@ -19,69 +19,58 @@ jobs:
           POSTGRES_USER: ${{ secrets.PGUSER }}
           POSTGRES_PASSWORD: ${{ secrets.PGPASSWORD }}
           POSTGRES_DB: ${{ secrets.PGDATABASE }}
-        options: >-
-          --health-cmd "pg_isready -U ${{ secrets.PGUSER }}" 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 5
         ports:
           - 5432:5432
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20.18.0'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.18.0"
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    # Paso temporal para verificar si las variables de entorno se configuran correctamente
-    - name: Check environment variables
-      run: |
-        echo "POSTGRES_USER is set to $PGUSER"
-        echo "POSTGRES_PASSWORD is set to $PGPASSWORD"
-        echo "POSTGRES_DB is set to $PGDATABASE"
-      env:
-        PGUSER: ${{ secrets.PGUSER }}
-        PGPASSWORD: ${{ secrets.PGPASSWORD }}
-        PGDATABASE: ${{ secrets.PGDATABASE }}
+      # Paso para verificar repetidamente si PostgreSQL está listo usando pg_isready
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          until pg_isready -h localhost -U $PGUSER; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 5
+          done
+        env:
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
 
-    # Paso temporal para probar la conexión a PostgreSQL
-    - name: Test PostgreSQL connection
-      run: |
-        pg_isready -U $PGUSER
-      env:
-        PGUSER: ${{ secrets.PGUSER }}
+      - name: Set up database environment variables
+        run: |
+          echo "DATABASE_URL=postgres://${{ secrets.PGUSER }}:${{ secrets.PGPASSWORD }}@localhost:5432/${{ secrets.PGDATABASE }}" >> .env
 
-    - name: Set up database environment variables
-      run: |
-        echo "DATABASE_URL=postgres://${{ secrets.PGUSER }}:${{ secrets.PGPASSWORD }}@localhost:5432/${{ secrets.PGDATABASE }}" >> .env
-
-    - name: Run tests
-      run: npm test
+      - name: Run tests
+        run: npm test
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Login to Heroku
-      env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      run: |
-        echo "machine api.heroku.com" > ~/.netrc
-        echo "  login ${{ secrets.HEROKU_EMAIL }}" >> ~/.netrc
-        echo "  password ${{ secrets.HEROKU_API_KEY }}" >> ~/.netrc
-        echo "machine git.heroku.com" >> ~/.netrc
-        echo "  login ${{ secrets.HEROKU_EMAIL }}" >> ~/.netrc
-        echo "  password ${{ secrets.HEROKU_API_KEY }}" >> ~/.netrc
+      - name: Login to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "machine api.heroku.com" > ~/.netrc
+          echo "  login ${{ secrets.HEROKU_EMAIL }}" >> ~/.netrc
+          echo "  password ${{ secrets.HEROKU_API_KEY }}" >> ~/.netrc
+          echo "machine git.heroku.com" >> ~/.netrc
+          echo "  login ${{ secrets.HEROKU_EMAIL }}" >> ~/.netrc
+          echo "  password ${{ secrets.HEROKU_API_KEY }}" >> ~/.netrc
 
-    - name: Deploy to Heroku
-      run: git push https://git.heroku.com/hiveautomation.git HEAD:master
+      - name: Deploy to Heroku
+        run: git push https://git.heroku.com/hiveautomation.git HEAD:master
