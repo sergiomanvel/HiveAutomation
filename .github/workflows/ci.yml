@@ -39,6 +39,24 @@ jobs:
     - name: Install dependencies
       run: npm install
 
+    # Paso temporal para verificar si las variables de entorno se configuran correctamente
+    - name: Check environment variables
+      run: |
+        echo "POSTGRES_USER is set to $PGUSER"
+        echo "POSTGRES_PASSWORD is set to $PGPASSWORD"
+        echo "POSTGRES_DB is set to $PGDATABASE"
+      env:
+        PGUSER: ${{ secrets.PGUSER }}
+        PGPASSWORD: ${{ secrets.PGPASSWORD }}
+        PGDATABASE: ${{ secrets.PGDATABASE }}
+
+    # Paso temporal para probar la conexión a PostgreSQL
+    - name: Test PostgreSQL connection
+      run: |
+        pg_isready -U $PGUSER
+      env:
+        PGUSER: ${{ secrets.PGUSER }}
+
     - name: Set up database environment variables
       run: |
         echo "DATABASE_URL=postgres://${{ secrets.PGUSER }}:${{ secrets.PGPASSWORD }}@localhost:5432/${{ secrets.PGDATABASE }}" >> .env
