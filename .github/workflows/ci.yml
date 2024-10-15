@@ -29,14 +29,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20.18.0"
+          node-version: "20.x"
 
       - name: Install dependencies
         run: npm install
 
-      # Paso para verificar las variables de entorno (debug)
+      # Verificar las variables de entorno (debug)
       - name: Check environment variables
         run: |
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
           echo "POSTGRES_USER=$PGUSER"
           echo "POSTGRES_PASSWORD=$PGPASSWORD"
           echo "POSTGRES_DB=$PGDATABASE"
@@ -44,22 +45,9 @@ jobs:
           PGUSER: ${{ secrets.PGUSER }}
           PGPASSWORD: ${{ secrets.PGPASSWORD }}
           PGDATABASE: ${{ secrets.PGDATABASE }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
-      # Migrar manualmente la base de datos (crear la tabla users)
-      - name: Run database migrations
-        run: |
-          psql -h localhost -U $PGUSER -d $PGDATABASE -c "
-          CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            username VARCHAR(50) NOT NULL,
-            password VARCHAR(100) NOT NULL
-          );"
-        env:
-          PGUSER: ${{ secrets.PGUSER }}
-          PGPASSWORD: ${{ secrets.PGPASSWORD }}
-          PGDATABASE: ${{ secrets.PGDATABASE }}
-
-      # Esperar a que PostgreSQL esté listo
+      # Esperar a que PostgreSQL esté listo antes de la migración
       - name: Wait for PostgreSQL to be ready
         run: |
           until pg_isready -h localhost -U $PGUSER; do
@@ -75,6 +63,20 @@ jobs:
       - name: Test PostgreSQL connection
         run: |
           psql -h localhost -p 5432 -U $PGUSER -d $PGDATABASE -c "SELECT 1"
+        env:
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+
+      # Migrar manualmente la base de datos (crear la tabla users)
+      - name: Run database migrations
+        run: |
+          psql -h localhost -U $PGUSER -d $PGDATABASE -c "
+          CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(50) NOT NULL,
+            password VARCHAR(100) NOT NULL
+          );"
         env:
           PGUSER: ${{ secrets.PGUSER }}
           PGPASSWORD: ${{ secrets.PGPASSWORD }}
