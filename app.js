@@ -13,6 +13,12 @@ const userRoutes = require('./src/routes/users');
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
+// Ruta para la página principal
+app.get('/', (req, res) => {
+  res.send('Bienvenido a HiveAutomation API');
+});
+
+
 // Middleware global de manejo de errores
 app.use((err, req, res, next) => {
   logger.error(`Error no controlado: ${err.message}`);
