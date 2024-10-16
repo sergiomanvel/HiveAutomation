@@ -38,8 +38,6 @@ if (process.env.NODE_ENV === 'development') {
 module.exports = app;
 
 
-module.exports = app;
-
 // Código comentado para redirigir de HTTP a HTTPS
 // const http = require('http');
 
