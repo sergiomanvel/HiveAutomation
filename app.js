@@ -1,19 +1,17 @@
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
-const logger = require('./src/logger'); // Cambia la ruta para que apunte al archivo correcto
-const verifyToken = require('./src/middleware/authMiddleware'); // Actualiza la ruta si es necesario
+const logger = require('./src/logger');
 const PORT = process.env.PORT || 3000;
-
 const app = express();
 
 app.use(express.json());
 
-const authRoutes = require('./src/routes/auth'); // Manteniendo la ruta
+// Rutas
+const authRoutes = require('./src/routes/auth');
+const userRoutes = require('./src/routes/users');
 app.use('/api/auth', authRoutes);
-
-const userRoutes = require('./src/routes/users'); // Manteniendo la ruta
-app.use('/api/users', verifyToken, userRoutes);
+app.use('/api/users', userRoutes);
 
 // Middleware global de manejo de errores
 app.use((err, req, res, next) => {
@@ -21,21 +19,24 @@ app.use((err, req, res, next) => {
   res.status(500).send('Error en el servidor');
 });
 
-if (process.env.NODE_ENV !== 'test') {
-  try {
-    const privateKey = fs.readFileSync('C:/Users/Sergio/Documents/key.pem', 'utf8'); // Ruta del archivo de clave privada
-    const certificate = fs.readFileSync('C:/Users/Sergio/Documents/cert.pem', 'utf8'); // Ruta del archivo de certificado
+if (process.env.NODE_ENV === 'development') {
+  // Solo usar HTTPS en desarrollo
+  const privateKey = fs.readFileSync('C:/Users/Sergio/Documents/key.pem', 'utf8');
+  const certificate = fs.readFileSync('C:/Users/Sergio/Documents/cert.pem', 'utf8');
+  const credentials = { key: privateKey, cert: certificate };
 
-    // Eliminamos la variable `ca` ya que no estamos usando un archivo `chain.pem`
-    const credentials = { key: privateKey, cert: certificate };
-    
-    https.createServer(credentials, app).listen(PORT, () => {
-      logger.info(`Servidor HTTPS corriendo en el puerto ${PORT}`);
-    });
-  } catch (error) {
-    logger.error('Error al leer los archivos de certificados: ' + error.message);
-  }
+  https.createServer(credentials, app).listen(PORT, () => {
+    logger.info(`Servidor HTTPS corriendo en el puerto ${PORT}`);
+  });
+} else {
+  // Usar HTTP en producción (Heroku)
+  app.listen(PORT, () => {
+    logger.info(`Servidor corriendo en el puerto ${PORT}`);
+  });
 }
+
+module.exports = app;
+
 
 module.exports = app;
 
