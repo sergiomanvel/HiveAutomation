@@ -19,8 +19,8 @@ app.use((err, req, res, next) => {
   res.status(500).send('Error en el servidor');
 });
 
+// Usar HTTPS solo en desarrollo local
 if (process.env.NODE_ENV === 'development') {
-  // Solo usar HTTPS en desarrollo
   const privateKey = fs.readFileSync('C:/Users/Sergio/Documents/key.pem', 'utf8');
   const certificate = fs.readFileSync('C:/Users/Sergio/Documents/cert.pem', 'utf8');
   const credentials = { key: privateKey, cert: certificate };
@@ -29,13 +29,14 @@ if (process.env.NODE_ENV === 'development') {
     logger.info(`Servidor HTTPS corriendo en el puerto ${PORT}`);
   });
 } else {
-  // Usar HTTP en producción (Heroku)
+  // Usar HTTP en producción (Heroku) ya que Heroku maneja HTTPS automáticamente
   app.listen(PORT, () => {
-    logger.info(`Servidor corriendo en el puerto ${PORT}`);
+    logger.info(`Servidor HTTP corriendo en el puerto ${PORT}`);
   });
 }
 
 module.exports = app;
+
 
 
 // Código comentado para redirigir de HTTP a HTTPS
