@@ -17,15 +17,10 @@ beforeEach(async () => {
 
   // Verificar el valor actual de la secuencia
   const sequenceValue = await pool.query("SELECT nextval('users_id_seq')");
-  console.log(
-    "Valor de la secuencia después de reiniciar:",
-    sequenceValue.rows[0].nextval
-  );
+  console.log( "Valor de la secuencia después de reiniciar:", sequenceValue.rows[0].nextval );
 
   // Verificar si el usuario admin ya existe
-  const adminExists = await pool.query(
-    "SELECT * FROM users WHERE username = 'admin'"
-  );
+  const adminExists = await pool.query("SELECT * FROM users WHERE username = 'admin'");
   if (adminExists.rows.length > 0) {
     console.log("El usuario admin ya existe");
   }

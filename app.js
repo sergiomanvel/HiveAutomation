@@ -2,8 +2,8 @@ const express = require('express');
 const https = require('https');
 const fs = require('fs');
 const logger = require('./src/logger');
-const PORT = process.env.PORT || 3000;
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -18,24 +18,32 @@ app.get('/', (req, res) => {
   res.send('Bienvenido a HiveAutomation API');
 });
 
-
 // Middleware global de manejo de errores
 app.use((err, req, res, next) => {
   logger.error(`Error no controlado: ${err.message}`);
   res.status(500).send('Error en el servidor');
 });
 
-// Usar HTTPS solo en desarrollo local
-if (process.env.NODE_ENV === 'development') {
-  const privateKey = fs.readFileSync('C:/Users/Sergio/Documents/key.pem', 'utf8');
-  const certificate = fs.readFileSync('C:/Users/Sergio/Documents/cert.pem', 'utf8');
+// Verificar si los archivos SSL están disponibles
+const sslKeyPath = 'C:/Users/Sergio/Documents/key.pem';
+const sslCertPath = 'C:/Users/Sergio/Documents/cert.pem';
+
+if (fs.existsSync(sslKeyPath) && fs.existsSync(sslCertPath)) {
+  // Si los archivos SSL están disponibles, inicia el servidor HTTPS
+  const privateKey = fs.readFileSync(sslKeyPath, 'utf8');
+  const certificate = fs.readFileSync(sslCertPath, 'utf8');
   const credentials = { key: privateKey, cert: certificate };
 
   https.createServer(credentials, app).listen(PORT, () => {
     logger.info(`Servidor HTTPS corriendo en el puerto ${PORT}`);
   });
-} else {
+} else if (process.env.NODE_ENV === 'production') {
   // Usar HTTP en producción (Heroku) ya que Heroku maneja HTTPS automáticamente
+  app.listen(PORT, () => {
+    logger.info(`Servidor HTTP corriendo en el puerto ${PORT} en producción`);
+  });
+} else {
+  // Para otros entornos, como desarrollo sin certificados, usa HTTP
   app.listen(PORT, () => {
     logger.info(`Servidor HTTP corriendo en el puerto ${PORT}`);
   });
