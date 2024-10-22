@@ -1,11 +1,26 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const https = require('https');
 const fs = require('fs');
 const logger = require('./src/logger');
 const app = express();
 const PORT = process.env.PORT || 3000;
+const helmet = require('helmet');
 
 app.use(express.json());
+
+// Usar Helmet para seguridad básica de cabeceras HTTP
+app.use(helmet());
+
+// Configuración de express-rate-limit
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Limita a 100 solicitudes por cada 15 minutos
+  message: 'Demasiadas solicitudes desde esta IP, por favor intenta de nuevo más tarde.'
+});
+
+// Aplicar el limitador de tasa a todas las rutas
+app.use(limiter);
 
 // Rutas
 const authRoutes = require('./src/routes/auth');
@@ -50,7 +65,6 @@ if (fs.existsSync(sslKeyPath) && fs.existsSync(sslCertPath)) {
 }
 
 module.exports = app;
-
 
 
 // Código comentado para redirigir de HTTP a HTTPS
