@@ -8,7 +8,11 @@ const pool = new Pool({
   password: process.env.PGPASSWORD,
   port: process.env.PGPORT,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 10, // Ajusta el número máximo de conexiones
+  idleTimeoutMillis: 30000, // Tiempo antes de que las conexiones inactivas se cierren
+  connectionTimeoutMillis: 2000, // Tiempo de espera para obtener una nueva conexión
 });
+
 
 
 // Manejo de errores en la conexión a la base de datos

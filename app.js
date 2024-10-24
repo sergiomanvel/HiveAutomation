@@ -3,14 +3,62 @@ const rateLimit = require('express-rate-limit');
 const https = require('https');
 const fs = require('fs');
 const logger = require('./src/logger');
+const { createClient } = require('redis');  // Usamos createClient para Redis v4
+const helmet = require('helmet');
 const app = express();
 const PORT = process.env.PORT || 3000;
-const helmet = require('helmet');
 
-app.use(express.json());
+// Configuración de Redis (se ajusta según si está en local o en Heroku)
+const redisUrl = process.env.REDISCLOUD_URL || 'redis://localhost:6379';  // Usar REDISCLOUD_URL en Heroku
+const client = createClient({ url: redisUrl });
 
-// Usar Helmet para seguridad básica de cabeceras HTTP
+// Conectar explícitamente a Redis y manejar errores
+client.connect().catch(err => {
+  logger.error('Error conectando a Redis:', err);
+});
+
+client.on('connect', () => {
+  logger.info('Conectado a Redis correctamente');
+});
+
+client.on('error', (err) => {
+  logger.error('Error conectando a Redis:', err);
+});
+
+// Middleware para verificar caché
+const checkCache = async (req, res, next) => {
+  const { id } = req.params;
+
+  // Verificar si el ID está presente en los parámetros de la ruta
+  if (!id) {
+    logger.info("No se proporcionó un ID, saltando verificación de caché");
+    return next();
+  }
+
+  const redisKey = String(id);
+
+  logger.info(`Verificando caché para el ID: ${redisKey}`);
+
+  try {
+    const data = await client.get(redisKey);
+    if (data !== null) {
+      logger.info(`Datos obtenidos del caché para el usuario con ID ${redisKey}`);
+      return res.json(JSON.parse(data));
+    } else {
+      logger.info(`No se encontraron datos en caché para el usuario con ID ${redisKey}`);
+      next();
+    }
+  } catch (err) {
+    logger.error(`Error con Redis: ${err.message}`);
+    next();
+  }
+};
+
+// Seguridad con Helmet
 app.use(helmet());
+
+// Usar JSON en las solicitudes
+app.use(express.json());
 
 // Configuración de express-rate-limit
 const limiter = rateLimit({
@@ -25,8 +73,11 @@ app.use(limiter);
 // Rutas
 const authRoutes = require('./src/routes/auth');
 const userRoutes = require('./src/routes/users');
+
+// Aplicar el middleware de caché solo a la ruta de usuarios con ID
+app.use('/api/users', userRoutes); // Sin checkCache para las solicitudes generales a /api/users
+app.use('/api/users/:id', checkCache, userRoutes); // checkCache solo cuando hay un ID
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
 
 // Ruta para la página principal
 app.get('/', (req, res) => {
@@ -35,7 +86,7 @@ app.get('/', (req, res) => {
 
 // Middleware global de manejo de errores
 app.use((err, req, res, next) => {
-  logger.error(`Error no controlado: ${err.message}`);
+  logger.error(`Error no controlado: ${err.stack}`);
   res.status(500).send('Error en el servidor');
 });
 
@@ -65,16 +116,3 @@ if (fs.existsSync(sslKeyPath) && fs.existsSync(sslCertPath)) {
 }
 
 module.exports = app;
-
-
-// Código comentado para redirigir de HTTP a HTTPS
-// const http = require('http');
-
-// const httpServer = http.createServer((req, res) => {
-//   res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
-//   res.end();
-// });
-
-// httpServer.listen(80, () => {
-//   console.log('Redirigiendo todo el tráfico HTTP a HTTPS');
-// });
