@@ -22,18 +22,21 @@ client.on('error', (err) => {
 const checkCache = async (req, res, next) => {
   const { id } = req.params;
 
-  // Verificar si el ID está presente en los parámetros de la ruta
   if (!id) {
     logger.info("No se proporcionó un ID, saltando verificación de caché");
     return next();
   }
 
   const redisKey = String(id);
+  const start = Date.now();  // Marca de tiempo antes de la operación Redis
 
   logger.info(`Verificando caché para el ID: ${redisKey}`);
 
   try {
     const data = await client.get(redisKey);
+    const duration = Date.now() - start;  // Tiempo transcurrido
+    logger.info(`Operación Redis completada en ${duration} ms`);
+
     if (data !== null) {
       logger.info(`Datos obtenidos del caché para el usuario con ID ${redisKey}`);
       return res.json(JSON.parse(data));
@@ -51,8 +54,11 @@ const checkCache = async (req, res, next) => {
 router.get("/", async (req, res) => {
   logger.info('Recibida solicitud GET para todos los usuarios');
   try {
+    const start = Date.now();  // Marca de tiempo antes de la consulta
     const result = await pool.query("SELECT id, username FROM users");
-    logger.info('Consulta de usuarios exitosa');
+    const duration = Date.now() - start;  // Tiempo transcurrido
+    logger.info(`Consulta de todos los usuarios completada en ${duration} ms`);
+    
     res.json(result.rows);
   } catch (err) {
     logger.error(`Error al obtener usuarios: ${err.message}`);
@@ -66,10 +72,13 @@ router.get("/:id", checkCache, async (req, res) => {
   logger.info(`Recibida solicitud GET para el usuario con ID: ${id}`);
   
   try {
+    const start = Date.now();  // Marca de tiempo antes de la consulta
     const result = await pool.query(
       "SELECT id, username FROM users WHERE id = $1",
       [id]
     );
+    const duration = Date.now() - start;  // Tiempo transcurrido
+    logger.info(`Consulta para usuario con ID ${id} completada en ${duration} ms`);
     
     if (result.rows.length === 0) {
       logger.info(`Usuario con ID ${id} no encontrado`);
@@ -95,7 +104,7 @@ router.get("/:id", checkCache, async (req, res) => {
 router.post("/", async (req, res) => {
   const { username, password } = req.body;
   try {
-    // Encriptar la contraseña antes de guardarla
+    const start = Date.now();  // Marca de tiempo antes del proceso de creación
     const hashedPassword = await bcrypt.hash(password, 10);
     
     // Insertar usuario y devolver solo el id y el username
@@ -103,6 +112,8 @@ router.post("/", async (req, res) => {
       "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username", 
       [username, hashedPassword]
     );
+    const duration = Date.now() - start;  // Tiempo transcurrido
+    logger.info(`Creación de usuario completada en ${duration} ms`);
 
     // Eliminar cualquier caché previo de usuarios
     await client.flushDb();
