@@ -7,7 +7,7 @@ const { createClient } = require('redis');
 
 // Configuración de Redis (Redis v4)
 const client = createClient({
-  url: 'redis://localhost:6379'
+  url: process.env.REDISCLOUD_URL || 'redis://localhost:6379'
 });
 
 client.on('error', (err) => {

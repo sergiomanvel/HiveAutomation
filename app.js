@@ -28,6 +28,15 @@ client.on('error', (err) => {
 // Configurar Express para confiar en el proxy de Heroku
 app.set('trust proxy', 1);  // Confía en el proxy para la IP real del cliente
 
+// Middleware para manejar timeout en Express
+app.use((req, res, next) => {
+  res.setTimeout(60000, () => { // Ajusta el timeout a 60 segundos para diagnóstico
+    logger.error('La solicitud ha tomado demasiado tiempo.');
+    res.status(503).send('La solicitud ha expirado.');
+  });
+  next();
+});
+
 // Middleware para verificar caché
 const checkCache = async (req, res, next) => {
   const { id } = req.params;
@@ -39,11 +48,15 @@ const checkCache = async (req, res, next) => {
   }
 
   const redisKey = String(id);
+  const start = Date.now();  // Marca de tiempo antes de la operación Redis
 
   logger.info(`Verificando caché para el ID: ${redisKey}`);
 
   try {
     const data = await client.get(redisKey);
+    const duration = Date.now() - start;  // Tiempo transcurrido
+    logger.info(`Operación Redis completada en ${duration} ms`);
+
     if (data !== null) {
       logger.info(`Datos obtenidos del caché para el usuario con ID ${redisKey}`);
       return res.json(JSON.parse(data));
