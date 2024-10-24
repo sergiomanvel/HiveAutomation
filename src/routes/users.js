@@ -72,12 +72,9 @@ router.get("/:id", checkCache, async (req, res) => {
   logger.info(`Recibida solicitud GET para el usuario con ID: ${id}`);
   
   try {
-    const start = Date.now();  // Marca de tiempo antes de la consulta
-    const result = await pool.query(
-      "SELECT id, username FROM users WHERE id = $1",
-      [id]
-    );
-    const duration = Date.now() - start;  // Tiempo transcurrido
+    const start = Date.now();
+    const result = await pool.query("SELECT id, username FROM users WHERE id = $1", [id]);
+    const duration = Date.now() - start;
     logger.info(`Consulta para usuario con ID ${id} completada en ${duration} ms`);
     
     if (result.rows.length === 0) {
@@ -87,18 +84,21 @@ router.get("/:id", checkCache, async (req, res) => {
 
     const user = result.rows[0];
 
-    // Guardar en caché los resultados por 1 hora (3600 segundos) en Redis v4
+    // Guardar en caché los resultados por 1 hora
     await client.set(id, JSON.stringify(user), {
-      EX: 3600  // Tiempo de expiración en segundos
+      EX: 3600
     });
 
     logger.info(`Usuario con ID ${id} encontrado, devolviendo datos`);
     res.json(user);
   } catch (err) {
+    // Captura cualquier error y registra detalles adicionales
     logger.error(`Error al obtener usuario por ID: ${err.message}`);
+    logger.error(`Detalles completos del error: ${err.stack}`);  // Detalles completos del error
     res.status(500).send("Error en el servidor");
   }
 });
+
 
 // Crear un nuevo usuario (sin devolver la contraseña en la respuesta)
 router.post("/", async (req, res) => {
