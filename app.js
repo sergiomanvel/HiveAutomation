@@ -25,6 +25,9 @@ client.on('error', (err) => {
   logger.error('Error conectando a Redis:', err);
 });
 
+// Configurar Express para confiar en el proxy de Heroku
+app.set('trust proxy', 1);  // Confía en el proxy para la IP real del cliente
+
 // Middleware para verificar caché
 const checkCache = async (req, res, next) => {
   const { id } = req.params;
