@@ -5,6 +5,8 @@ const fs = require('fs');
 const logger = require('./src/logger');
 const { createClient } = require('redis');  // Usamos createClient para Redis v4
 const helmet = require('helmet');
+const csrf = require('csurf');
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -76,6 +78,19 @@ app.use(helmet());
 // Usar JSON en las solicitudes
 app.use(express.json());
 
+// Configurar cookieParser para CSRF
+app.use(cookieParser());
+
+// Configuración de CSRF
+const csrfProtection = csrf({ cookie: { httpOnly: true, secure: true, sameSite: 'None' } });
+app.use(csrfProtection);
+
+// Middleware para agregar el token CSRF en la cookie
+app.use((req, res, next) => {
+  res.cookie('XSRF-TOKEN', req.csrfToken());
+  next();
+});
+
 // Configuración de express-rate-limit
 // const limiter = rateLimit({
 //   windowMs: 15 * 60 * 1000, // 15 minutos
@@ -91,9 +106,8 @@ const authRoutes = require('./src/routes/auth');
 const userRoutes = require('./src/routes/users');
 
 // Aplicar el middleware de caché solo a la ruta de usuarios con ID
-app.use('/api/users', userRoutes); // Sin checkCache para las solicitudes generales a /api/users
-app.use('/api/users/:id', checkCache, userRoutes); // checkCache solo cuando hay un ID
-app.use('/api/auth', authRoutes);
+app.use('/api/users', checkCache, userRoutes); // checkCache solo cuando hay un ID
+app.use('/api/auth', authRoutes); // Rutas de autenticación
 
 // Ruta para la página principal
 app.get('/', (req, res) => {
