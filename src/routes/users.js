@@ -85,19 +85,20 @@ router.get("/:id", checkCache, async (req, res) => {
     const user = result.rows[0];
 
     // Guardar en caché los resultados por 1 hora
-    await client.set(id, JSON.stringify(user), {
-      EX: 3600
-    });
-
+    if (client.isOpen) {
+      await client.set(id, JSON.stringify(user), { EX: 3600 });
+    }
+    
     logger.info(`Usuario con ID ${id} encontrado, devolviendo datos`);
     res.json(user);
   } catch (err) {
-    // Captura cualquier error y registra detalles adicionales
+    // Captura y registra todos los errores
     logger.error(`Error al obtener usuario por ID: ${err.message}`);
-    logger.error(`Detalles completos del error: ${err.stack}`);  // Detalles completos del error
+    logger.error(`Stacktrace: ${err.stack}`);
     res.status(500).send("Error en el servidor");
   }
 });
+
 
 
 // Crear un nuevo usuario (sin devolver la contraseña en la respuesta)

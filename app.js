@@ -77,14 +77,14 @@ app.use(helmet());
 app.use(express.json());
 
 // Configuración de express-rate-limit
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Limita a 100 solicitudes por cada 15 minutos
-  message: 'Demasiadas solicitudes desde esta IP, por favor intenta de nuevo más tarde.'
-});
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutos
+//   max: 100, // Limita a 100 solicitudes por cada 15 minutos
+//   message: 'Demasiadas solicitudes desde esta IP, por favor intenta de nuevo más tarde.'
+// });
 
 // Aplicar el limitador de tasa a todas las rutas
-app.use(limiter);
+//app.use(limiter);
 
 // Rutas
 const authRoutes = require('./src/routes/auth');
@@ -98,6 +98,10 @@ app.use('/api/auth', authRoutes);
 // Ruta para la página principal
 app.get('/', (req, res) => {
   res.send('Bienvenido a HiveAutomation API');
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).send('API is working');
 });
 
 // Middleware global de manejo de errores
