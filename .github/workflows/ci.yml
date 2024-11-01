@@ -92,7 +92,7 @@ jobs:
 
       # Ejecutar las pruebas
       - name: Run tests
-        run: npm test
+        run: npm test -- --detectOpenHandles
         env:
           NODE_ENV: test
           PGUSER: ${{ secrets.PGUSER }}
