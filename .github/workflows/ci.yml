@@ -22,6 +22,11 @@ jobs:
         ports:
           - 5432:5432
 
+      redis: # Opcional - Agregar Redis si es necesario en las pruebas
+        image: redis:latest
+        ports:
+          - 6379:6379
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.6.0
@@ -34,18 +39,21 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Verificar las variables de entorno (debug)
-      - name: Check environment variables
+      # Configurar y verificar variables de entorno
+      - name: Setup and Check environment variables
         run: |
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
-          echo "POSTGRES_USER=$PGUSER"
-          echo "POSTGRES_PASSWORD=$PGPASSWORD"
-          echo "POSTGRES_DB=$PGDATABASE"
+          echo "NODE_ENV=test" >> .env
+          echo "DATABASE_URL=postgres://${{ secrets.PGUSER }}:${{ secrets.PGPASSWORD }}@localhost:5432/${{ secrets.PGDATABASE }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "REDISCLOUD_URL=redis://localhost:6379" >> .env
+          echo "NODE_ENV=test" # Confirma que estamos en modo de prueba
         env:
+          NODE_ENV: test
           PGUSER: ${{ secrets.PGUSER }}
           PGPASSWORD: ${{ secrets.PGPASSWORD }}
           PGDATABASE: ${{ secrets.PGDATABASE }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          REDISCLOUD_URL: redis://localhost:6379
 
       # Esperar a que PostgreSQL esté listo antes de la migración
       - name: Wait for PostgreSQL to be ready
@@ -82,20 +90,16 @@ jobs:
           PGPASSWORD: ${{ secrets.PGPASSWORD }}
           PGDATABASE: ${{ secrets.PGDATABASE }}
 
-      # Configurar las variables de entorno de la base de datos y JWT_SECRET para las pruebas
-      - name: Set up database and JWT environment variables
-        run: |
-          echo "DATABASE_URL=postgres://${{ secrets.PGUSER }}:${{ secrets.PGPASSWORD }}@localhost:5432/${{ secrets.PGDATABASE }}" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-
       # Ejecutar las pruebas
       - name: Run tests
         run: npm test
         env:
+          NODE_ENV: test
           PGUSER: ${{ secrets.PGUSER }}
           PGPASSWORD: ${{ secrets.PGPASSWORD }}
           PGDATABASE: ${{ secrets.PGDATABASE }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          REDISCLOUD_URL: redis://localhost:6379
 
   deploy:
     needs: test
