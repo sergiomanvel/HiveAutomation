@@ -88,10 +88,8 @@ describe("API de Usuarios", () => {
 });
 
 afterAll(async () => {
-  // Cerrar la conexión a la base de datos después de todas las pruebas
-  await closeDbConnection();
-
-  // Cerrar la conexión de Redis y el servidor
-  await closeRedisConnection();
-  server.close();
+  await closeRedisConnection(); // Cierra la conexión de Redis
+  await pool.end(); // Cierra el pool de PostgreSQL
+  server.close(); // Cierra el servidor Express
 });
+

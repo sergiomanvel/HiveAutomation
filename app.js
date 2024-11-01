@@ -24,7 +24,7 @@ app.use(cookieParser());
 
 // Protección contra CSRF
 const csrfProtection = csrf({
-  cookie: { httpOnly: true, secure: isProduction, sameSite: "None" }
+  cookie: { httpOnly: true, secure: isProduction, sameSite: isProduction ? 'None' : 'Strict' }
 });
 app.use(csrfProtection);
 
