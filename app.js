@@ -22,15 +22,28 @@ app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
-// Protección contra CSRF
+// Configuración del middleware CSRF
 const csrfProtection = csrf({
   cookie: { httpOnly: true, secure: isProduction, sameSite: isProduction ? 'None' : 'Strict' }
 });
-app.use(csrfProtection);
+
+// Ruta para obtener el token CSRF
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
+  res.status(200).json({ csrfToken: req.csrfToken() });
+});
+
+// Middleware de protección CSRF, solo fuera del entorno de prueba
+if (process.env.NODE_ENV !== "test") {
+  app.use(csrfProtection);
+}
 
 // Middleware para agregar el token CSRF en las cookies de respuesta
 app.use((req, res, next) => {
-  res.cookie("XSRF-TOKEN", req.csrfToken());
+  res.cookie("XSRF-TOKEN", req.csrfToken ? req.csrfToken() : '', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'None' : 'Strict'
+  });
   next();
 });
 
