@@ -7,7 +7,7 @@ const csrf = require("csurf");
 const cookieParser = require("cookie-parser");
 
 const logger = require("./src/logger");
-const client = require("./src/redisClient"); // Cliente centralizado de Redis
+const { client } = require("./src/redisClient"); // Cliente centralizado de Redis
 const authRoutes = require("./src/routes/auth");
 const userRoutes = require("./src/routes/users");
 
@@ -74,7 +74,9 @@ app.use((err, req, res, next) => {
   res.status(500).send("Error en el servidor");
 });
 
-// Configuración para habilitar HTTPS si los archivos SSL están disponibles
+// Inicialización condicional del servidor para entornos de desarrollo y producción
+let server; // Declarar el servidor para poder exportarlo
+
 if (isProduction) {
   const sslKeyPath = process.env.SSL_KEY_PATH || "C:/Users/Sergio/Documents/key.pem";
   const sslCertPath = process.env.SSL_CERT_PATH || "C:/Users/Sergio/Documents/cert.pem";
@@ -84,19 +86,21 @@ if (isProduction) {
     const certificate = fs.readFileSync(sslCertPath, "utf8");
     const credentials = { key: privateKey, cert: certificate };
 
-    https.createServer(credentials, app).listen(PORT, () => {
+    server = https.createServer(credentials, app).listen(PORT, () => {
       logger.info(`Servidor HTTPS corriendo en el puerto ${PORT}`);
     });
   } else {
-    app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       logger.warn("Archivos SSL no encontrados, ejecutando HTTP en producción.");
       logger.info(`Servidor HTTP corriendo en el puerto ${PORT} en producción`);
     });
   }
-} else {
-  app.listen(PORT, () => {
+} else if (process.env.NODE_ENV !== "test") {
+  // Solo iniciar el servidor HTTP en desarrollo si no está en modo de prueba
+  server = app.listen(PORT, () => {
     logger.info(`Servidor HTTP corriendo en el puerto ${PORT} en desarrollo`);
   });
 }
 
-module.exports = app;
+// Exportar `app` y `server` para poder cerrarlo en las pruebas
+module.exports = { app, server };

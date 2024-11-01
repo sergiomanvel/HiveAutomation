@@ -1,11 +1,12 @@
 require("dotenv").config(); // Cargar las variables de entorno para Jest
 const request = require("supertest");
-const app = require("../../app");
+const { app, server } = require("../../app"); // Importar tanto `app` como `server`
 const pool = require("../db");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs"); // Importamos bcrypt para encriptar la contraseña
+const bcrypt = require("bcryptjs"); // Importar bcrypt para encriptar la contraseña
+const { closeRedisConnection } = require('../src/redisClient'); // Importar función para cerrar Redis
 
-// Generamos un token JWT válido antes de las pruebas
+// Generar un token JWT válido antes de las pruebas
 let tokenValido;
 
 beforeEach(async () => {
@@ -17,7 +18,7 @@ beforeEach(async () => {
 
   // Verificar el valor actual de la secuencia
   const sequenceValue = await pool.query("SELECT nextval('users_id_seq')");
-  console.log( "Valor de la secuencia después de reiniciar:", sequenceValue.rows[0].nextval );
+  console.log("Valor de la secuencia después de reiniciar:", sequenceValue.rows[0].nextval);
 
   // Verificar si el usuario admin ya existe
   const adminExists = await pool.query("SELECT * FROM users WHERE username = 'admin'");
@@ -87,5 +88,10 @@ describe("API de Usuarios", () => {
 });
 
 afterAll(async () => {
-  await pool.end(); // Cerrar la conexión a la base de datos después de todas las pruebas
+  // Cerrar la conexión a la base de datos después de todas las pruebas
+  await closeDbConnection();
+
+  // Cerrar la conexión de Redis y el servidor
+  await closeRedisConnection();
+  server.close();
 });

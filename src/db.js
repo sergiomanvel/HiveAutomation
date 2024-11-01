@@ -36,7 +36,14 @@ const query = async (text, params) => {
   }
 };
 
+// Función para cerrar la conexión del pool al finalizar todas las pruebas
+const closeDbConnection = async () => {
+  await pool.end();
+  console.log('Conexión a PostgreSQL cerrada');
+};
+
 module.exports = {
   query,
   pool, // Exportar pool para operaciones que requieran conexiones directas
+  closeDbConnection, // Exportar función para cerrar la conexión al final de las pruebas
 };
