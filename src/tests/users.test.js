@@ -1,10 +1,10 @@
 require("dotenv").config(); // Cargar las variables de entorno para Jest
 const request = require("supertest");
 const { app, server } = require("../../app"); // Importar tanto `app` como `server`
-const pool = require("../db");
+const pool = require('../../src/db');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs"); // Importar bcrypt para encriptar la contraseña
-const { closeRedisConnection } = require('../src/redisClient'); // Importar función para cerrar Redis
+const { closeRedisConnection } = require('../../src/redisClient'); // Importar función para cerrar Redis
 
 // Generar un token JWT válido antes de las pruebas
 let tokenValido;

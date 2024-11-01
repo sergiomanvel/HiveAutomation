@@ -1,7 +1,7 @@
 require("dotenv").config({ path: ".env.test" }); // Asegura que uses las variables de entorno para pruebas
 const request = require("supertest");
-const app = require("../app"); // Ruta del archivo app.js
-const pool = require("../db"); // Conexión a PostgreSQL
+const { app } = require('../../app'); // Ruta del archivo app.js
+const pool = require('../../src/db'); // Conexión a PostgreSQL
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const client = require('../src/redisClient'); // Cliente Redis
